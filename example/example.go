@@ -23,4 +23,13 @@ func main() {
 	fmt.Println(cache.Has(20))
 	// true
 
+	stat := cache.Remove(20)
+
+	if stat {
+		fmt.Println("Removed")
+	}
+
+	fmt.Println(cache.Has(20))
+	// false
+
 }
