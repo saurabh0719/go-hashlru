@@ -14,6 +14,10 @@ Visit `example/example.go` in the root directory for a simple example.
 $ go get github.com/saurabh0719/go-hashlru
 ```
 
+Latest - `v0.0.3`
+
+<hr>
+
 ## API Reference 
 
 HashLRU Struct : 
