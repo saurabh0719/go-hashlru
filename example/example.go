@@ -20,4 +20,7 @@ func main() {
 	fmt.Println(numVal)
 	// 5
 
+	fmt.Println(cache.Has(20))
+	// true
+
 }

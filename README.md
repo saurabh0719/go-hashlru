@@ -57,10 +57,10 @@ Returns `true` if the key exists, else returns `false`.
 
 ### 5. func (lru *HashLRU) Remove
 ```go
-func (lru *HashLRU) Remove(key interface{}) (interface{}, bool)
+func (lru *HashLRU) Remove(key interface{}) bool
 ```
 
-Deletes the key-value pair and returns `deletedValue, true` if it exists, else returns `nil, false`.
+Deletes the key-value pair and returns `true` if it exists, else returns `false`.
 
 ### 6. func (lru *HashLRU) Len
 ```go

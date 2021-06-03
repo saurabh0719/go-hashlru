@@ -93,25 +93,25 @@ func (lru *HashLRU) Has(key interface{}) bool {
 }
 
 // Removes a key from the cache
-func (lru *HashLRU) Remove(key interface{}) (interface{}, bool) {
+func (lru *HashLRU) Remove(key interface{}) bool {
 
 	lru.lock.Lock()
 
-	if value, found := lru.newCache[key]; found {
+	if _, found := lru.newCache[key]; found {
 		delete(lru.newCache, key)
 		lru.lock.Unlock()
-		return value, true
+		return true
 	}
 
-	if value, found := lru.oldCache[key]; found {
+	if _, found := lru.oldCache[key]; found {
 		delete(lru.oldCache, key)
 		lru.lock.Unlock()
-		return value, true
+		return true
 	}
 
 	lru.lock.Unlock()
 
-	return nil, false
+	return false
 
 }
 
