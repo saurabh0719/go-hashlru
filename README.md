@@ -1,8 +1,10 @@
 # go-hashlru
 
-A simple thread-safe, fixed size LRU written in Go based on [dominictarr's Hashlru Algorithm](https://github.com/dominictarr/hashlru). :arrows_clockwise:
+A simple thread-safe, fixed size LRU written in Go. Based on [dominictarr's Hashlru Algorithm](https://github.com/dominictarr/hashlru). :arrows_clockwise:
 
 Uses `map[interface{}]interface{}` to allow kv pairs of any type.
+
+Visit `example/example.go` in the root directory for a simple example.
 
 <hr>
 
