@@ -4,6 +4,17 @@ A simple thread-safe, fixed size LRU written in Go. Based on [dominictarr's Hash
 
 Uses `map[interface{}]interface{}` to allow kv pairs of any type.
 
+```go
+cache, _ := lru.NewHLRU(100)
+
+cache.Set("key", "value")
+
+val, _ := cache.Get("key")
+
+fmt.Println(val)
+// value
+```
+
 Visit `example/example.go` in the root directory for a simple example.
 
 <hr>
@@ -86,3 +97,5 @@ func (lru *HashLRU) Resize(newSize int) (int, error)
 ```
 
 Update the `maxSize` of the cache. Items will be evicted automatically to adjust. Returns the *number of evicted key-value pairs* due to the re-size. 
+
+<hr>
