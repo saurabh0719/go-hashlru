@@ -1,4 +1,4 @@
-package hashlru
+package lru
 
 import (
 	"errors"
@@ -14,7 +14,7 @@ type HashLRU struct {
 }
 
 // Returns a new hashlru instance
-func New(maxSize int) (*HashLRU, error) {
+func NewHLRU(maxSize int) (*HashLRU, error) {
 
 	if maxSize <= 0 {
 		return nil, errors.New("Size must be a postive int")
