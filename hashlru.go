@@ -73,6 +73,7 @@ func (lru *HashLRU) Get(key interface{}) (interface{}, bool) {
 		return value, found
 	}
 
+	lru.lock.Unlock()
 	return nil, false
 
 }
