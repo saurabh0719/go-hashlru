@@ -6,16 +6,34 @@ import (
 	"math"
 )
 
+/*
+The HashLRU algorithm maintains two separate maps 
+and bulk eviction happens only after both the maps fill up
+
+Hence the the callBack function is triggered in bulk and 
+is not an accurate measure. Use NewWithEvict() with caution.
+*/
+
 type HashLRU struct {
-	maxSize  int
-	size     int
-	oldCache map[interface{}]interface{}
-	newCache map[interface{}]interface{}
-	lock     sync.RWMutex
+	maxSize  					int
+	size     					int
+	oldCache, newCache 			map[interface{}]interface{}
+	onEvictedCB					func (key, value interface{})
+	lock     					sync.RWMutex
+}
+
+type KVPair struct {
+	key, value			interface{}
 }
 
 // Returns a new hashlru instance
 func NewHLRU(maxSize int) (*HashLRU, error) {
+
+	return NewWithEvict(maxSize, nil)
+
+}
+
+func NewWithEvict(maxSize int, onEvict func(key, value interface{})) (*HashLRU, error) {
 
 	if maxSize <= 0 {
 		return nil, errors.New("Size must be a postive int")
@@ -24,6 +42,7 @@ func NewHLRU(maxSize int) (*HashLRU, error) {
 	lru := &HashLRU{
 		maxSize:  maxSize,
 		size:     0,
+		onEvictedCB: onEvict,
 		oldCache: make(map[interface{}]interface{}),
 		newCache: make(map[interface{}]interface{}),
 	}
@@ -32,6 +51,14 @@ func NewHLRU(maxSize int) (*HashLRU, error) {
 
 }
 
+/*
+update(key, value interface{}) is used internally in Get() and Set()
+to impose least recently by pushing all recently accessed keys to the newCache
+and the oldCache acts as a back up dump once newCache fills up. 
+
+Bulk eviction takes place from the oldCache
+*/
+
 func (lru *HashLRU) update(key, value interface{}) {
 
 	lru.newCache[key] = value
@@ -39,12 +66,24 @@ func (lru *HashLRU) update(key, value interface{}) {
 
 	if lru.size >= lru.maxSize {
 		lru.size = 0
-		lru.oldCache = lru.newCache
+
+		if lru.onEvictedCB != nil {
+			for key, value := range lru.oldCache {
+				lru.onEvictedCB(key, value)
+			}
+		}
+		
+		lru.oldCache = make(map[interface{}]interface{})
+		for key, value := range lru.newCache {
+			lru.oldCache[key] = value
+		}
+
 		lru.newCache = make(map[interface{}]interface{})
 	}
 
 }
 
+// Set a value and update the cache
 func (lru *HashLRU) Set(key, value interface{}) {
 
 	lru.lock.Lock()
@@ -59,6 +98,7 @@ func (lru *HashLRU) Set(key, value interface{}) {
 
 }
 
+// Get a value and update the cache
 func (lru *HashLRU) Get(key interface{}) (interface{}, bool) {
 
 	lru.lock.Lock()
@@ -69,6 +109,7 @@ func (lru *HashLRU) Get(key interface{}) (interface{}, bool) {
 	}
 
 	if value, found := lru.oldCache[key]; found {
+		delete(lru.oldCache, key)
 		lru.update(key, value)
 		lru.lock.Unlock()
 		return value, found
@@ -118,14 +159,21 @@ func (lru *HashLRU) Remove(key interface{}) bool {
 
 	lru.lock.Lock()
 
-	if _, found := lru.newCache[key]; found {
+	if val, found := lru.newCache[key]; found {
 		delete(lru.newCache, key)
+		lru.size--
+		if lru.onEvictedCB != nil {
+			lru.onEvictedCB(key, val)
+		}
 		lru.lock.Unlock()
 		return true
 	}
 
-	if _, found := lru.oldCache[key]; found {
+	if val, found := lru.oldCache[key]; found {
 		delete(lru.oldCache, key)
+		if lru.onEvictedCB != nil {
+			lru.onEvictedCB(key, val)
+		}
 		lru.lock.Unlock()
 		return true
 	}
@@ -162,15 +210,20 @@ func (lru *HashLRU) Len() int {
 // Clears all entries.
 func (lru *HashLRU) Clear() {
 
-	lru.lock.Lock()
+	lru.lock.Lock() 
 
-	for key, _ := range lru.newCache {
-		delete(lru.newCache, key)
+	if lru.onEvictedCB != nil {
+		for key, value := range lru.oldCache {
+			lru.onEvictedCB(key, value)
+		}
+		for key, value := range lru.newCache {
+			lru.onEvictedCB(key, value)
+		}
 	}
 
-	for key, _ := range lru.oldCache {
-		delete(lru.oldCache, key)
-	}
+	lru.oldCache = make(map[interface{}]interface{})
+	lru.newCache = make(map[interface{}]interface{})
+	lru.size = 0
 
 	lru.lock.Unlock()
 
@@ -183,7 +236,10 @@ func (lru* HashLRU) Keys() []interface{} {
 	tempKeys := make([]interface{}, 0)
 
 	for key, _ := range lru.oldCache {
-		tempKeys = append(tempKeys, key)
+		// tempKeys = append(tempKeys, key)
+		if _, found := lru.newCache[key]; !found {
+			tempKeys = append(tempKeys, key)
+		}
 	}
 
 	for key, _ := range lru.newCache {
@@ -201,8 +257,10 @@ func (lru *HashLRU) Vals() []interface{} {
 
 	tempVals := make([]interface{}, 0)
 
-	for _, value := range lru.oldCache {
-		tempVals = append(tempVals, value)
+	for key, value := range lru.oldCache {
+		if _, found := lru.newCache[key]; !found {
+			tempVals = append(tempVals, value)
+		}
 	}
 
 	for _, value := range lru.newCache {
@@ -214,6 +272,34 @@ func (lru *HashLRU) Vals() []interface{} {
 
 }
 
+func (lru *HashLRU) all() []*KVPair {
+
+	lru.lock.RLock()
+
+	allPairs := []*KVPair{}
+
+	for key, value := range lru.oldCache {
+		if _, found := lru.newCache[key]; !found {
+
+			kvPair := new(KVPair)
+			kvPair.key = key
+			kvPair.value = value
+			allPairs = append(allPairs, kvPair)
+		}
+	}
+
+	for key, value := range lru.newCache {
+		kvPair := new(KVPair)
+		kvPair.key = key
+		kvPair.value = value
+		allPairs = append(allPairs, kvPair)
+	}
+	
+	lru.lock.RUnlock()
+	return allPairs
+
+}
+
 // Resizes cache, returning number of items deleted
 func (lru *HashLRU) Resize(newSize int) (int, error) {
 
@@ -221,7 +307,7 @@ func (lru *HashLRU) Resize(newSize int) (int, error) {
 		return 0, errors.New("Size must be a postive int")
 	}
 
-	totalItems := len(lru.oldCache) + len(lru.newCache)
+	totalItems := lru.Len()
 	removeCount := totalItems - newSize
 
 	if removeCount < 0 {
@@ -241,8 +327,7 @@ func (lru *HashLRU) Resize(newSize int) (int, error) {
 
 	} else {
 
-		tempKeys := lru.Keys()
-		tempVals := lru.Vals()
+		allPairs := lru.all()
 
 		lru.lock.Lock()
 
@@ -251,8 +336,18 @@ func (lru *HashLRU) Resize(newSize int) (int, error) {
 		lru.size = 0
 		lru.maxSize = newSize
 
-		for i := 0; i < removeCount; i++ {
-			lru.oldCache[tempKeys[i]] = tempVals[i]
+		var i = 0
+
+		for i < removeCount {
+			if lru.onEvictedCB != nil {
+				lru.onEvictedCB(allPairs[i].key, allPairs[i].value)
+			}
+			i++
+		}
+
+		for i < len(allPairs) {
+			lru.oldCache[allPairs[i].key] = allPairs[i].value
+			i++
 		}
 
 		lru.lock.Unlock()
