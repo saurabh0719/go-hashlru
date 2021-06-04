@@ -2,28 +2,28 @@ package hlru
 
 import (
 	"errors"
-	"sync"
 	"math"
+	"sync"
 )
 
 /*
-The HashLRU algorithm maintains two separate maps 
+The HashLRU algorithm maintains two separate maps
 and bulk eviction happens only after both the maps fill up
 
-Hence the the callBack function is triggered in bulk and 
+Hence the the callBack function is triggered in bulk and
 is not an accurate measure. Use NewWithEvict() with caution.
 */
 
 type HashLRU struct {
-	maxSize  					int
-	size     					int
-	oldCache, newCache 			map[interface{}]interface{}
-	onEvictedCB					func (key, value interface{})
-	lock     					sync.RWMutex
+	maxSize            int
+	size               int
+	oldCache, newCache map[interface{}]interface{}
+	onEvictedCB        func(key, value interface{})
+	lock               sync.RWMutex
 }
 
 type KVPair struct {
-	key, value			interface{}
+	key, value interface{}
 }
 
 // Returns a new hashlru instance
@@ -40,11 +40,11 @@ func NewWithEvict(maxSize int, onEvict func(key, value interface{})) (*HashLRU, 
 	}
 
 	lru := &HashLRU{
-		maxSize:  maxSize,
-		size:     0,
+		maxSize:     maxSize,
+		size:        0,
 		onEvictedCB: onEvict,
-		oldCache: make(map[interface{}]interface{}),
-		newCache: make(map[interface{}]interface{}),
+		oldCache:    make(map[interface{}]interface{}),
+		newCache:    make(map[interface{}]interface{}),
 	}
 
 	return lru, nil
@@ -54,7 +54,7 @@ func NewWithEvict(maxSize int, onEvict func(key, value interface{})) (*HashLRU, 
 /*
 update(key, value interface{}) is used internally in Get() and Set()
 to impose least recently by pushing all recently accessed keys to the newCache
-and the oldCache acts as a back up dump once newCache fills up. 
+and the oldCache acts as a back up dump once newCache fills up.
 
 Bulk eviction takes place from the oldCache
 */
@@ -72,7 +72,7 @@ func (lru *HashLRU) update(key, value interface{}) {
 				lru.onEvictedCB(key, value)
 			}
 		}
-		
+
 		lru.oldCache = make(map[interface{}]interface{})
 		for key, value := range lru.newCache {
 			lru.oldCache[key] = value
@@ -188,7 +188,7 @@ func (lru *HashLRU) Remove(key interface{}) bool {
 func (lru *HashLRU) Len() int {
 
 	lru.lock.RLock()
-	
+
 	if lru.size == 0 {
 		lru.lock.RUnlock()
 		return len(lru.oldCache)
@@ -203,14 +203,14 @@ func (lru *HashLRU) Len() int {
 	}
 
 	lru.lock.RUnlock()
-	return int(math.Min(float64(lru.size + oldCacheSize), float64(lru.maxSize)))
+	return int(math.Min(float64(lru.size+oldCacheSize), float64(lru.maxSize)))
 
 }
 
 // Clears all entries.
 func (lru *HashLRU) Clear() {
 
-	lru.lock.Lock() 
+	lru.lock.Lock()
 
 	if lru.onEvictedCB != nil {
 		for key, value := range lru.oldCache {
@@ -229,7 +229,7 @@ func (lru *HashLRU) Clear() {
 
 }
 
-func (lru* HashLRU) Keys() []interface{} {
+func (lru *HashLRU) Keys() []interface{} {
 
 	lru.lock.RLock()
 
@@ -245,7 +245,7 @@ func (lru* HashLRU) Keys() []interface{} {
 	for key, _ := range lru.newCache {
 		tempKeys = append(tempKeys, key)
 	}
-	
+
 	lru.lock.RUnlock()
 	return tempKeys
 
@@ -266,7 +266,7 @@ func (lru *HashLRU) Vals() []interface{} {
 	for _, value := range lru.newCache {
 		tempVals = append(tempVals, value)
 	}
-	
+
 	lru.lock.RUnlock()
 	return tempVals
 
@@ -294,7 +294,7 @@ func (lru *HashLRU) all() []*KVPair {
 		kvPair.value = value
 		allPairs = append(allPairs, kvPair)
 	}
-	
+
 	lru.lock.RUnlock()
 	return allPairs
 

@@ -6,7 +6,7 @@ import (
 )
 
 func BenchmarkLRU_Rand(b *testing.B) {
-	
+
 	lru, _ := NewHLRU(8192)
 
 	trace := make([]int64, b.N*2)

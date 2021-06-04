@@ -6,7 +6,7 @@ import (
 )
 
 func Test_HLRU(t *testing.T) {
-	
+
 	lru, err := NewHLRU(100)
 
 	if err != nil {
@@ -21,7 +21,7 @@ func Test_HLRU(t *testing.T) {
 		t.Fatalf("Error in LRU length: %v", lru.Len())
 	}
 
-	lru.Clear() 
+	lru.Clear()
 
 	if lru.Len() != 0 {
 		t.Fatalf("Error in LRU Clear(): %v", lru.Len())
@@ -32,8 +32,8 @@ func Test_HLRU(t *testing.T) {
 
 	keys := lru.Keys()
 
-	for i:=0; i< len(keys); i++ {
-		_, ok := lru.Get(keys[i]) 
+	for i := 0; i < len(keys); i++ {
+		_, ok := lru.Get(keys[i])
 		if !ok {
 			t.Fatalf("Error: %v", keys[i])
 		}
@@ -72,14 +72,14 @@ func Test_onEvict(t *testing.T) {
 	keys := lru.Keys()
 	// vals := lru.Vals()
 
-	for i:=0; i<len(keys); i++ {
+	for i := 0; i < len(keys); i++ {
 		if lru.Has(keys[i]) != true {
 			t.Fatalf("Error in Has() Keys()")
 		}
 	}
 
-	for i:=0; i< lru.Len(); i++ {
-		_, ok := lru.Peek(i) 
+	for i := 0; i < lru.Len(); i++ {
+		_, ok := lru.Peek(i)
 		if !ok {
 			t.Fatalf("Error in Peek()")
 		}
@@ -143,9 +143,9 @@ func Test_Remove_Resize(t *testing.T) {
 		t.Fatalf("Error in Down Sizing")
 	}
 
-	lru.Set(3,3)
-	lru.Set(4,4)
-	lru.Set(5,5)
+	lru.Set(3, 3)
+	lru.Set(4, 4)
+	lru.Set(5, 5)
 
 	if lru.Len() != 2 {
 		t.Fatalf("Error in LRU length: %v", lru.Len())
