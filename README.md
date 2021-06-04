@@ -79,7 +79,7 @@ Deletes the key-value pair and returns `true` if it exists, else returns `false`
 
 #### func (lru *HashLRU) Peek
 ```go
-func (lru *LRU) Peek(key, interface{}), (interface{}, bool)
+func (lru *LRU) Peek(key interface{}) (interface{}, bool)
 ```
 
 Get the value of a key without updating the cache. Returns `value, true` if the kv pair is found, else returns `nil, false`.
@@ -118,5 +118,14 @@ func (lru *HashLRU) Vals() []interface{}
 ```
 
 Returns a slice of all the Values in the cache.
+
+<hr>
+
+### Tests
+```sh
+$ go test 
+```
+
+Use `-v` for an detailed output.
 
 <hr>

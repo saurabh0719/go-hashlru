@@ -3,6 +3,7 @@ package hlru
 import (
 	"errors"
 	"sync"
+	"math"
 )
 
 type HashLRU struct {
@@ -79,7 +80,7 @@ func (lru *HashLRU) Get(key interface{}) (interface{}, bool) {
 }
 
 // Peek the value of a key without updating the cache
-func (lru *LRU) Peek(key, interface{}), (interface{}, bool) {
+func (lru *HashLRU) Peek(key interface{}) (interface{}, bool) {
 
 	lru.lock.RLock()
 
@@ -139,10 +140,22 @@ func (lru *HashLRU) Remove(key interface{}) bool {
 func (lru *HashLRU) Len() int {
 
 	lru.lock.RLock()
-	length := len(lru.newCache) + len(lru.oldCache)
-	lru.lock.RUnlock()
+	
+	if lru.size == 0 {
+		lru.lock.RUnlock()
+		return len(lru.oldCache)
+	}
 
-	return length
+	oldCacheSize := 0
+
+	for key, _ := range lru.oldCache {
+		if _, found := lru.newCache[key]; !found {
+			oldCacheSize++
+		}
+	}
+
+	lru.lock.RUnlock()
+	return int(math.Min(float64(lru.size + oldCacheSize), float64(lru.maxSize)))
 
 }
 
