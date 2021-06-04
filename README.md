@@ -19,29 +19,53 @@ Visit `example/example.go` in the root directory for a simple example.
 
 <hr>
 
-### Install
+<span id="contents"></span>
+
+### Table of Contents :
+* [Installation](#installation)
+* [API reference](#api)
+    * [HashLRU struct](#type)
+    * [Functions](#func)
+* [Tests](#tests)
+* [Benchmark](#bench)
+
+<span id="installation"></span>
+### Installation
 
 ```sh
 $ go get github.com/saurabh0719/go-hashlru
 ```
 
-<!--Latest - `v0.0.3`-->
+Latest - `v0.1.0`
 
 <hr>
 
 ### API Reference 
 
+<span id="type"></span>
 #### HashLRU Struct  
 
 ```go
 type HashLRU struct {
-	maxSize  int
-	size     int
-	oldCache map[interface{}]interface{}
-	newCache map[interface{}]interface{}
-	lock     sync.RWMutex
+	maxSize            int
+	size               int
+	oldCache, newCache map[interface{}]interface{}
+	onEvictedCB        func(key, value interface{})
+	lock               sync.RWMutex
 }
 ```
+
+As explained by [dominictarr](https://github.com/dominictarr/hashlru) :
+* This algorithm does not give you an ordered list of the N most recently used items, but has the important properties of the LRU (bounded memory use and O(1) time complexity)
+
+The HashLRU algorithm maintains two separate maps
+and bulk eviction happens only after both the maps fill up. Hence `onEvictedCB` is triggered in bulk and is not an accurate measure of timely LRU-ness.
+
+This implementation uses `sync.RWMutex` to ensure thread-safety.
+
+[Go back to the table of contents](#contents)
+
+<span id="func"></span>
 
 #### func NewHLRU
 ```go
@@ -50,39 +74,46 @@ func NewHLRU(maxSize int) (*HashLRU, error)
 
 Returns a new instance of `HashLRU` of the given size: `maxSize`.
 
+#### func NewWithEvict
+```go
+func NewWithEvict(maxSize int, onEvict func(key, value interface{})) (*HashLRU, error)
+```
+
+Takes `maxSzie` and a callback function `onEvict` as arguments and returns a new instance of `HashLRU` of the given size.
+
 #### func (lru *HashLRU) Set
 ```go
 func (lru *HashLRU) Set(key, value interface{})
 ```
 
-Adds a new key-value pair to the cache.
+Adds a new key-value pair to the cache *and* updates it.
 
 #### func (lru *HashLRU) Get
 ```go
 func (lru *HashLRU) Get(key interface{}) (interface{}, bool)
 ```
 
-Get the `value` of any `key`. Returns `value, true` if the kv pair is found, else returns `nil, false`.
+Get the `value` of any `key` *and* updates the cache. Returns `value, true` if the kv pair is found, else returns `nil, false`.
 
 #### func (lru *HashLRU) Has
 ```go
 func (lru *HashLRU) Has(key interface{}) bool
 ```
-Returns `true` if the key exists, else returns `false`.
+Returns `true` if the key exists, else returns `false`. 
 
 #### func (lru *HashLRU) Remove
 ```go
 func (lru *HashLRU) Remove(key interface{}) bool
 ```
 
-Deletes the key-value pair and returns `true` if it exists, else returns `false`.
+Deletes the key-value pair and returns `true` if its successful, else returns `false`.
 
 #### func (lru *HashLRU) Peek
 ```go
 func (lru *LRU) Peek(key interface{}) (interface{}, bool)
 ```
 
-Get the value of a key without updating the cache. Returns `value, true` if the kv pair is found, else returns `nil, false`.
+Get the value of a key without updating the cache. Returns `value, true` if the kv pair is found, else returns `nil, false`. 
 
 #### func (lru *HashLRU) Clear
 ```go
@@ -90,6 +121,8 @@ func (lru *HashLRU) Clear()
 ```
 
 Empties the Cache.
+
+[Go back to the table of contents](#contents)
 
 #### func (lru *HashLRU) Resize
 ```go
@@ -119,7 +152,11 @@ func (lru *HashLRU) Vals() []interface{}
 
 Returns a slice of all the Values in the cache.
 
+[Go back to the table of contents](#contents)
+
 <hr>
+
+<span id="test"></span>
 
 ### Tests
 ```sh
@@ -127,5 +164,18 @@ $ go test
 ```
 
 Use `-v` for an detailed output.
+
+<hr>
+
+<span id="func"></span>
+
+### Benchmark 
+```sh
+$ go test -run=XXX -bench=.
+```
+
+HashLRU has a better hit/miss ratio for `BenchmarkHLRU_Rand` and `BenchmarkHLRU_Freq` (negligible) as compared to same benchmark tests from [golang-lru](https://github.com/hashicorp/golang-lru). However, `golang-lru` does have a slightly lower `ns/op`.
+
+[Go back to the table of contents](#contents)
 
 <hr>

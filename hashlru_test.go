@@ -159,4 +159,19 @@ func Test_Remove_Resize(t *testing.T) {
 	// }
 
 	// fmt.Print("LEN ", lru.Len())
+
+	lru.Clear()
+	
+	evicted, _ = lru.Resize(3)
+
+	if evicted != 0 {
+		t.Fatalf("Error in Down Sizing")
+	}
+
+	lru.Set(3, 3)
+	lru.Set(4, 4)
+
+	if lru.Len() != 2 {
+		t.Fatalf("Error in LRU length: %v", lru.Len())
+	}
 }

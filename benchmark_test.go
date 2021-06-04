@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func BenchmarkLRU_Rand(b *testing.B) {
+func BenchmarkHLRU_Rand(b *testing.B) {
 
 	lru, _ := NewHLRU(8192)
 
@@ -23,7 +23,7 @@ func BenchmarkLRU_Rand(b *testing.B) {
 		if i%2 == 0 {
 			lru.Set(trace[i], trace[i])
 		} else {
-			_, ok := lru.Peek(trace[i])
+			_, ok := lru.Get(trace[i])
 			if ok {
 				hit++
 			} else {
@@ -36,7 +36,7 @@ func BenchmarkLRU_Rand(b *testing.B) {
 
 }
 
-func BenchmarkLRU_Freq(b *testing.B) {
+func BenchmarkHLRU_Freq(b *testing.B) {
 
 	lru, _ := NewHLRU(8192)
 
