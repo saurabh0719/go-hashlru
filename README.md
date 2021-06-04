@@ -108,6 +108,8 @@ func (lru *HashLRU) Remove(key interface{}) bool
 
 Deletes the key-value pair and returns `true` if its successful, else returns `false`.
 
+[Go back to the table of contents](#contents)
+
 #### func (lru *HashLRU) Peek
 ```go
 func (lru *LRU) Peek(key interface{}) (interface{}, bool)
@@ -121,8 +123,6 @@ func (lru *HashLRU) Clear()
 ```
 
 Empties the Cache.
-
-[Go back to the table of contents](#contents)
 
 #### func (lru *HashLRU) Resize
 ```go
