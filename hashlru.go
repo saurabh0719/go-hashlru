@@ -1,4 +1,4 @@
-package lru
+package hlru
 
 import (
 	"errors"
@@ -78,6 +78,26 @@ func (lru *HashLRU) Get(key interface{}) (interface{}, bool) {
 
 }
 
+// Peek the value of a key without updating the cache
+func (lru *LRU) Peek(key, interface{}), (interface{}, bool) {
+
+	lru.lock.RLock()
+
+	if value, found := lru.newCache[key]; found {
+		lru.lock.RUnlock()
+		return value, found
+	}
+
+	if value, found := lru.oldCache[key]; found {
+		lru.lock.RUnlock()
+		return value, found
+	}
+
+	lru.lock.RUnlock()
+	return nil, false
+
+}
+
 // Checks if a key exists in cache
 func (lru *HashLRU) Has(key interface{}) bool {
 
@@ -143,6 +163,44 @@ func (lru *HashLRU) Clear() {
 
 }
 
+func (lru* HashLRU) Keys() []interface{} {
+
+	lru.lock.RLock()
+
+	tempKeys := make([]interface{}, 0)
+
+	for key, _ := range lru.oldCache {
+		tempKeys = append(tempKeys, key)
+	}
+
+	for key, _ := range lru.newCache {
+		tempKeys = append(tempKeys, key)
+	}
+	
+	lru.lock.RUnlock()
+	return tempKeys
+
+}
+
+func (lru *HashLRU) Vals() []interface{} {
+
+	lru.lock.RLock()
+
+	tempVals := make([]interface{}, 0)
+
+	for _, value := range lru.oldCache {
+		tempVals = append(tempVals, value)
+	}
+
+	for _, value := range lru.newCache {
+		tempVals = append(tempVals, value)
+	}
+	
+	lru.lock.RUnlock()
+	return tempVals
+
+}
+
 // Resizes cache, returning number of items deleted
 func (lru *HashLRU) Resize(newSize int) (int, error) {
 
@@ -153,9 +211,9 @@ func (lru *HashLRU) Resize(newSize int) (int, error) {
 	totalItems := len(lru.oldCache) + len(lru.newCache)
 	removeCount := totalItems - newSize
 
-	lru.lock.Lock()
-
 	if removeCount < 0 {
+
+		lru.lock.Lock()
 
 		for key, value := range lru.oldCache {
 			lru.newCache[key] = value
@@ -170,18 +228,10 @@ func (lru *HashLRU) Resize(newSize int) (int, error) {
 
 	} else {
 
-		tempKeys := make([]interface{}, 0)
-		tempVals := make([]interface{}, 0)
+		tempKeys := lru.Keys()
+		tempVals := lru.Vals()
 
-		for key, value := range lru.oldCache {
-			tempKeys = append(tempKeys, key)
-			tempVals = append(tempVals, value)
-		}
-
-		for key, value := range lru.newCache {
-			tempKeys = append(tempKeys, key)
-			tempVals = append(tempVals, value)
-		}
+		lru.lock.Lock()
 
 		lru.oldCache = make(map[interface{}]interface{})
 		lru.newCache = make(map[interface{}]interface{})

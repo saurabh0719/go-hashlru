@@ -7,7 +7,7 @@ import (
 
 func main() {
 
-	cache, _ := lru.NewHLRU(120)
+	cache, _ := hlru.NewHLRU(120)
 
 	cache.Set("key", 30)
 	cache.Set(20, 5)

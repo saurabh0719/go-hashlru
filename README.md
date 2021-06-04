@@ -2,10 +2,10 @@
 
 A simple thread-safe, fixed size LRU written in Go. Based on [dominictarr's Hashlru Algorithm](https://github.com/dominictarr/hashlru). :arrows_clockwise:
 
-Uses `map[interface{}]interface{}` to allow kv pairs of any type.
+Uses `map[interface{}]interface{}` to allow kv pairs of any type. The `hlru` package contains all the necessary functions.
 
 ```go
-cache, _ := lru.NewHLRU(100)
+cache, _ := hlru.NewHLRU(100)
 
 cache.Set("key", "value")
 
@@ -25,7 +25,7 @@ Visit `example/example.go` in the root directory for a simple example.
 $ go get github.com/saurabh0719/go-hashlru
 ```
 
-Latest - `v0.0.3`
+<!--Latest - `v0.0.3`-->
 
 <hr>
 
@@ -77,12 +77,12 @@ func (lru *HashLRU) Remove(key interface{}) bool
 
 Deletes the key-value pair and returns `true` if it exists, else returns `false`.
 
-#### func (lru *HashLRU) Len
+#### func (lru *HashLRU) Peek
 ```go
-func (lru *HashLRU) Len() int
+func (lru *LRU) Peek(key, interface{}), (interface{}, bool)
 ```
 
-Returns the total number of key-value pairs present in the cache.
+Get the value of a key without updating the cache. Returns `value, true` if the kv pair is found, else returns `nil, false`.
 
 #### func (lru *HashLRU) Clear
 ```go
@@ -97,5 +97,26 @@ func (lru *HashLRU) Resize(newSize int) (int, error)
 ```
 
 Update the `maxSize` of the cache. Items will be evicted automatically to adjust. Returns the *number of evicted key-value pairs* due to the re-size. 
+
+#### func (lru *HashLRU) Len
+```go
+func (lru *HashLRU) Len() int
+```
+
+Returns the total number of key-value pairs present in the cache.
+
+#### func (lru *HashLRU) Keys
+```go
+func (lru* HashLRU) Keys() []interface{}
+```
+
+Returns a slice of all the Keys in the cache.
+
+#### func (lru *HashLRU) Vals
+```go
+func (lru *HashLRU) Vals() []interface{}
+```
+
+Returns a slice of all the Values in the cache.
 
 <hr>
