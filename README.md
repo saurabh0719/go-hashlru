@@ -57,11 +57,12 @@ type HashLRU struct {
 }
 ```
 
+The HashLRU algorithm maintains two separate maps
+and bulk eviction happens only after both the maps fill up. Hence `onEvictedCB` is triggered in bulk and is not an accurate measure of timely LRU-ness.
+
 As explained by [dominictarr](https://github.com/dominictarr/hashlru) :
 * This algorithm does not give you an ordered list of the N most recently used items, but has the important properties of the LRU (bounded memory use and O(1) time complexity)
 
-The HashLRU algorithm maintains two separate maps
-and bulk eviction happens only after both the maps fill up. Hence `onEvictedCB` is triggered in bulk and is not an accurate measure of timely LRU-ness.
 
 This implementation uses `sync.RWMutex` to ensure thread-safety.
 
