@@ -1,10 +1,14 @@
 # go-hashlru
 
-![](https://img.shields.io/github/workflow/status/saurabh0719/go-hashlru/Go%20CI) ![](https://img.shields.io/github/go-mod/go-version/saurabh0719/go-hashlru) ![](https://img.shields.io/github/v/release/saurabh0719/go-hashlru?color=FFD500)
+![](https://img.shields.io/github/go-mod/go-version/saurabh0719/go-hashlru) ![](https://img.shields.io/github/v/release/saurabh0719/go-hashlru?color=FFD500)
 
 A simple thread-safe, fixed size LRU written in Go. Based on [dominictarr's Hashlru Algorithm](https://github.com/dominictarr/hashlru). :arrows_clockwise:
 
 Uses `map[interface{}]interface{}` to allow kv pairs of any type. The `hlru` package contains all the necessary functions.
+
+<div align="center">
+    <strong><a href="https://github.com/saurabh0719/go-hashlru">Github</a> | <a href="https://saurabh0719.github.io">Website</a> | <a href="https://github.com/saurabh0719/go-hashlru/releases">Releases</a> </strong>
+</div>
 
 ```go
 cache, _ := hlru.NewHLRU(100)
